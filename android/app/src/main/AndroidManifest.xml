@@ -17,6 +17,12 @@
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
         <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>
 
+        <!-- Add Facebook Content Provider -->
+        <provider
+            android:authorities="com.facebook.app.FacebookContentProviderYOUR_FACEBOOK_APP_ID"
+            android:name="com.facebook.FacebookContentProvider"
+            android:exported="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -62,6 +68,8 @@
             <data android:mimeType="text/plain"/>
         </intent>
         <provider android:authorities="com.facebook.katana.provider.PlatformProvider" />
+        <provider android:authorities="com.facebook.orca.provider.PlatformProvider" />
     </queries>
 
 </manifest>
+
