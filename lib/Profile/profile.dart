@@ -3,12 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'package:untitled/rating/AddRatingPage.dart';
+import 'package:untitled/rating/trainee_ratings_page.dart';
 import 'detailed_profile_page.dart';
 import 'package:untitled/AI/chatbot.dart';
 import '../Home__Page/favorite_page.dart';
 import '../rating/trainer_ratings_page.dart';
 import '../Home__Page/trainer_trainees_page.dart';
 import '../Home__Page/00_home_page.dart';
+import 'package:untitled/Profile/setting_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -55,6 +58,24 @@ class _ProfilePageState extends State<ProfilePage> {
           userData['userId'] = widget.userId;
           _isLoading = false;
         });
+
+        // ✅ هنا نحدّد الاشتراك لو مش موجود
+        String? role = userData['role'];
+        String? membershipType = userData['membershipType'];
+
+        if (membershipType == null || membershipType.isEmpty) {
+          String newType = (role == 'Trainer') ? 'premium' : 'standard';
+          String newStatus = 'active';
+
+          await _firestore.collection('users').doc(widget.userId).update({
+            'membershipType': newType,
+            'membershipStatus': newStatus,
+            'membershipUpdatedAt': FieldValue.serverTimestamp(),
+          });
+
+          // وبعد التحديث نجيب البيانات تاني
+          _fetchUserData();
+        }
       } else {
         if (!mounted) return;
         setState(() {
@@ -291,6 +312,16 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           _buildProfileMenuItem(
+            icon: Icons.rate_review_outlined,
+            title: 'Add Rating',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddRatingPage()),
+              );
+            },
+          ),
+          _buildProfileMenuItem(
             icon: Icons.group,
             title: 'View My Trainees',
             onTap: () {
@@ -300,6 +331,24 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             },
           ),
+        ],
+      );
+    }
+    // إضافة هذا الجزء الجديد للمتدربين
+    else if (userRole == 'Trainee') {
+      return Column(
+        children: [
+          _buildProfileMenuItem(
+            icon: Icons.star_outline,
+            title: 'View My Rating', // Singular since trainees typically get one rating
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TraineeRatingPage()),
+              );
+            },
+          ),
+          // Add debug option temporarily
         ],
       );
     }
@@ -830,7 +879,7 @@ class _ProfilePageState extends State<ProfilePage> {
         'membershipStart': startDateFormatted,
         'membershipEnd': endDateFormatted,
         'membershipDuration': membershipDetails['months'],
-        'membershipStatus': 'pending_approval',
+        'membershipStatus': 'active',
         'membershipUpdatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -986,7 +1035,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String birthdayDisplay = _formatBirthday();
     String userRole = userData['role'] as String? ?? '';
     String membershipStatus = userData['membershipStatus'] as String? ?? 'none';
-    String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'pending_approval')
+    String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'active')
         ? 'View Membership'
         : 'Join Membership';
 
@@ -1113,7 +1162,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: Icons.settings_outlined,
                   title: 'Settings',
                   onTap: () {
-                    print("Navigate to Settings");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage(userId: widget.userId)),  // ✅
+                    );
                   },
                 ),
                 _buildProfileMenuItem(
